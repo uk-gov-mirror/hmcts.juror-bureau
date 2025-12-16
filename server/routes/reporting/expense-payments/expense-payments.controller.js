@@ -1,5 +1,3 @@
-const { makeManualError } = require('../../../lib/mod-utils');
-
 (function() {
   'use strict';
 
@@ -9,11 +7,12 @@ const { makeManualError } = require('../../../lib/mod-utils');
   const validator = require('../../../config/validation/report-search-by');
   const { dateFilter } = require('../../../components/filters');
   const moment = require('moment');
+  const { makeManualError } = require('../../../lib/mod-utils');
   const { addURLQueryParams } = require('../standard-report/standard-report.controller.js');
 
   module.exports.getAttendanceDates = function(app) {
     return function(req, res) {
-      const reportType = reportKeys(app, req)['yield-performance'];
+      const reportType = reportKeys(app, req)['expense-payments'];
       const tmpErrors = _.clone(req.session.errors);
       const tmpBody = _.clone(req.session.formFields);
 
@@ -27,10 +26,10 @@ const { makeManualError } = require('../../../lib/mod-utils');
           items: tmpErrors,
         },
         tmpBody,
-        reportKey: 'yield-performance',
+        reportKey: 'expense-payments',
         title: reportType.title,
         searchLabels: reportType.searchLabelMappers,
-        reportUrl: app.namedRoutes.build(`reports.yield-performance.filter.dates.post`),
+        reportUrl: app.namedRoutes.build(`reports.expense-payments.filter.dates.post`),
         cancelUrl: app.namedRoutes.build('reports.reports.get'),
       });
     };
@@ -38,7 +37,7 @@ const { makeManualError } = require('../../../lib/mod-utils');
 
   module.exports.postAttendanceDates = function(app) {
     return function(req, res) {
-      const reportKey = 'yield-performance'
+      const reportKey = 'expense-payments'
       const reportType = reportKeys(app, req)[reportKey];
 
       const validatorResult = validate(req.body, validator.dateRange(_.camelCase(reportKey), req.body));
@@ -56,7 +55,7 @@ const { makeManualError } = require('../../../lib/mod-utils');
         return res.redirect(addURLQueryParams(reportType,  app.namedRoutes.build(`reports.${reportKey}.filter.dates.get`)));
       }
 
-      return res.redirect(app.namedRoutes.build(`reports.${reportKey}.filter.get`)
+      return res.redirect(app.namedRoutes.build('reports.expense-payments.filter.post')
         + `?fromDate=${dateFilter(req.body.dateFrom, 'DD/MM/YYYY', 'YYYY-MM-DD')}`
         + `&toDate=${dateFilter(req.body.dateTo, 'DD/MM/YYYY', 'YYYY-MM-DD')}`
       );
