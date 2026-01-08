@@ -2,8 +2,8 @@
   'use strict';
 
   const _ = require('lodash');
-  const { isCourtUser } = require('../../../components/auth/user-type');
-  const { dateFilter, capitalizeFully, toMoney, toSentenceCase } = require('../../../components/filters');
+  const { isCourtUser, isSystemAdministrator } = require('../../../components/auth/user-type');
+  const { dateFilter, capitalizeFully, toMoney, toSentenceCase, makeDate } = require('../../../components/filters');
   const {
     dailyUtilisationDAO,
     dailyUtilisationJurorsDAO,
@@ -11,7 +11,8 @@
     generateMonthlyUtilisationDAO,
     yieldPerformanceDAO,
     allCourtUtilisationDAO,
-    digitalSummonsReceivedReportDAO
+    digitalSummonsReceivedReportDAO,
+    weekendAttendanceReportDAO
   } = require('../../../objects/reports');
 
   const makeLink = (app) => {
@@ -216,7 +217,7 @@
         bespokeReport: {
           insertColumns: {
             6: ['', (data, isPrint = false) => {
-              return isPrint ? {} : { html: `<a href=${
+              return (isPrint || isSystemAdministrator(req) ) ? {} : { html: `<a href=${
                 app.namedRoutes.build('reports.incomplete-service.complete-redirect.get', {
                   jurorNumber: data.jurorNumber,
                   lastAttendanceDate: data.lastAttendanceDate ? data.lastAttendanceDate : null,
@@ -234,6 +235,11 @@
           'courtName',
         ],
         defaultSortColumn: 'lastName',
+        parentReport: {
+          key: 'courts-incomplete-service',
+          filterParam: dateFilter(new Date(), null, 'yyyy-MM-DD'),
+          useParentRoute: (req) => isSystemAdministrator(req),
+        }
       },
       'current-pool-status': {
         title: 'Current pool status report',
@@ -1564,7 +1570,9 @@
       'jury-attendance-audit': {
         title: 'Jury attendance audit report',
         apiKey: 'JuryAttendanceAuditReport',
-        searchProperty: 'juryAuditNumber',
+        searchProperty: {
+          filter: 'juryAuditNumber',
+        },
         headings: [
           'attendanceDate',
           'reportDate',
@@ -1620,7 +1628,9 @@
       'pool-attendance-audit': {
         title: 'Pool attendance audit report',
         apiKey: 'PoolAttendanceAuditReport',
-        searchProperty: 'poolAuditNumber',
+        searchProperty: {
+          filter: 'poolAuditNumber',
+        },
         headings: [
           'attendanceDate',
           'reportDate',
@@ -1841,6 +1851,85 @@
         printLandscape: true,
         fontSize: 8,
         exportLabel: 'Export data',
+      },
+      'weekend-attendance': {
+        title: 'Courts recording weekend attendance this month',
+        defaultSortColumn: 'courtName',
+        bespokeReport: {
+          dao: (req) => weekendAttendanceReportDAO.get(req)
+        },
+        tableColumnFormatting: {
+          totalPaid: (data) => data < 0 
+            ? `(£${(Math.round(Math.abs(data) * 100) / 100).toFixed(2).toString()})`
+            : `£${(Math.round(data * 100) / 100).toFixed(2).toString()}`
+        }
+      },
+      'weekend-attendance-audit': {
+        title: 'Weekend attendance audit report',
+        apiKey: 'WeekendAttendanceReport',
+        headings: [
+          'dateFrom',
+          'reportDate',
+          'dateTo',
+          'reportTime',
+          'total',
+          'courtName',
+        ],
+        defaultSortColumn: 'jurorNumber',
+        parentReport: {
+          key: 'weekend-attendance',
+          filterParam: 'all',
+        },
+        searchProperty: {
+          filter: 'locCode',
+        },
+        tableColumnFormatting: {
+          attendanceDate: (data) => data ? dateFilter(data, 'YYYY-mm-dd', 'DD MMM YYYY') : '-',
+        },
+      },
+      'expense-limit-adjustments': {
+        title: 'Manual adjustments to expense limits',
+        apiKey: 'ManualAdjustmentsToExpenseLimitsReport',
+        defaultSortColumn: 'courtName',
+        tableColumnFormatting: {
+          changeDate: (data) => {
+            if (!data) return '-';
+            const date = makeDate(data.slice(0, 3));
+            return dateFilter(date, null, 'DD MMM YYYY');
+          },
+        },
+      },
+      'expense-limit-adjustments-audit': {
+        title: 'Expense payments using adjusted limits',
+        apiKey: 'ExpensePaymentsUsingAdjustedLimitsReport',
+        headings: [
+          'transportType',
+          'reportDate',
+          'oldLimit',
+          'reportTime',
+          'newLimit',
+          'courtName',
+        ],
+        defaultSortColumn: 'courtName',
+        searchProperty: {
+          filter: 'transportType',
+          valueTransformer: (value) => capitalizeFully(toSentenceCase(value)),
+        },
+        configSessionVariables: {
+          courts: 'reportCourts',
+        },
+        parentReport: {
+          key: 'expense-limit-adjustments',
+          filterParam: 'all',
+        },
+      },
+      'courts-incomplete-service': {
+        title: 'Courts with incomplete service',
+        apiKey: 'CourtsWithIncompleteServiceReport',
+        defaultSortColumn: 'courtLocationNameAndCodeJp',
+        searchProperty: {
+          filter: 'date'
+        },
       },
     };
   };

@@ -28,6 +28,7 @@
   const moment = require('moment')
   const { dateFilter, capitalizeFully, capitalise, timeToDuration, toSentenceCase } = require('../../../components/filters');
   const { reportExport } = require('./report-export');
+  const { isSystemAdministrator } = require('../../../components/auth/user-type');
 
   const standardFilterGet = (app, reportKey) => async(req, res) => {
     const reportType = reportKeys(app, req)[reportKey];
@@ -310,7 +311,7 @@
 
   const standardReportGet = (app, reportKey, isPrint = false, isExport = false) => async(req, res) => {
     const reportType = reportKeys(app, req)[reportKey];
-    const config = { reportType: reportType.apiKey, locCode: req.session.authentication.locCode };
+    const config = { reportType: reportType.apiKey, locCode: req.query?.courtLocCode || req.session.authentication.locCode };
     const filter = req.session.reportFilter;
     const bannerMessage = _.clone(req.session.bannerMessage);
     let preReportRoute = _.clone(req.session.preReportRoute)
@@ -325,71 +326,108 @@
       const rows = tableData.map(data => {
         let row = tableHeadings.map(header => {
           if (!header.name || header.name === '') return;
+          
+          let output = '-';
+          if (reportType.tableColumnFormatting && reportType.tableColumnFormatting[_.camelCase(header.id)]) {
+            output = reportType.tableColumnFormatting[_.camelCase(header.id)](data[_.camelCase(header.id)]);
+          } else {
+            output = tableDataMappers[header.dataType](data[_.camelCase(header.id)]) || '-';
+          }
 
-          let output = tableDataMappers[header.dataType](data[_.camelCase(header.id)]);
+          // CREATING LINKS - SHOULD BE INACCESSIBLE BY ADMIN USERS AS THEY ARE NOT LOGGED IN TO ACTIVE COURT
+          if (!isSystemAdministrator(req)) {
+            if (header.id === 'juror_number' || header.id === 'juror_number_from_trial') {
+              return ({
+                html: `<a href=${
+                  app.namedRoutes.build('juror-record.overview.get', {jurorNumber: output})
+                }>${
+                  output
+                }</a>`,
+              });
+            }
+            if (header.id.includes('pool_number') && output && output !== '-') {
+              return ({
+                html: `<a href=${
+                  app.namedRoutes.build('pool-overview.get', {poolNumber: output})
+                }>${
+                  output
+                }</a>`,
+              });
+            }
+            if (header.id.includes('trial_number') && output && output !== '-') {
+              return ({
+                html: `<a href=${
+                  app.namedRoutes.build('trial-management.trials.detail.get', {trialNumber: data[_.camelCase(header.id)], locationCode: req.session.authentication.locCode})
+                }>${
+                  data[_.camelCase(header.id)]
+                }</a>`,
+              });
+            }
+            if (header.id === 'payment_audit' && typeof output !== 'undefined' && output !== '-') {
+              return ({
+                html: `<a href=${
+                  app.namedRoutes.build('reports.financial-audit.get', {auditNumber: output})
+                }>${
+                  output
+                }</a>`,
+              });
+            }
+            if (header.id === 'attendance_audit' && typeof output !== 'undefined' && output !== '-') {
+              let link;
+              if (output && output.charAt(0) === 'P') {
+                link = app.namedRoutes.build('reports.pool-attendance-audit.report.print', {
+                  filter: output,
+                })
+              } else if (output && output.charAt(0) === 'J') {
+                link = app.namedRoutes.build('reports.jury-attendance-audit.report.print', {
+                  filter: output,
+                })
+              }
+              return ({
+                html: link 
+                  ? `<a href='${link}' target="_blank">${
+                    output
+                  }</a>`
+                  : output,
+              });
+            }
+          }
 
-          if (header.id === 'juror_number' || header.id === 'juror_number_from_trial') {
-            return ({
-              html: `<a href=${
-                app.namedRoutes.build('juror-record.overview.get', {jurorNumber: output})
-              }>${
-                output
-              }</a>`,
-            });
+          if (header.id === 'COURT_LOCATION_NAME_AND_CODE' || header.id === 'court_name' || header.id === 'court_location_name_and_code_jp') {
+            const courtLocCode = output.split('(')[1].split(')')[0];
+            if (reportKey === 'weekend-attendance') {
+              return ({
+                html: `<a href=${app.namedRoutes.build('reports.weekend-attendance-audit.report.get', {filter: courtLocCode})}>${
+                  output
+                }</a>`,
+              });
+            }
+            if (reportKey === 'expense-limit-adjustments') {
+              return ({
+                html: `<a href=${
+                  app.namedRoutes.build('reports.expense-limit-adjustments-audit.redirect.get', {
+                    locCode: courtLocCode,
+                    transportType: data.transportType ? _.camelCase(data.transportType) : '',
+                  })
+                }>${
+                  output
+                }</a>`,
+              });
+            }
+            if (reportKey === 'courts-incomplete-service') {
+              return ({
+                html: `<a href=${
+                    app.namedRoutes.build('reports.incomplete-service.report.get', { filter: dateFilter(new Date(), null, 'yyyy-MM-DD') })
+                    + `?courtLocCode=${courtLocCode}`
+                  }>${
+                  output
+                }</a>`,
+              });
+            }
           }
           
           if (header.id === 'trial_type') {
             return { html: output === 'Civ' ? 'Civil' : 'Criminal' };
-          }
-
-          if (header.id.includes('pool_number')) {
-            return ({
-              html: `<a href=${
-                app.namedRoutes.build('pool-overview.get', {poolNumber: output})
-              }>${
-                output
-              }</a>`,
-            });
-          }
-
-          if (header.id.includes('trial_number') && output) {
-            return ({
-              html: `<a href=${
-                app.namedRoutes.build('trial-management.trials.detail.get', {trialNumber: data[_.camelCase(header.id)], locationCode: req.session.authentication.locCode})
-              }>${
-                data[_.camelCase(header.id)]
-              }</a>`,
-            });
-          }
-
-          if (header.id === 'payment_audit' && typeof output !== 'undefined' && output !== '-') {
-            return ({
-              html: `<a href=${
-                app.namedRoutes.build('reports.financial-audit.get', {auditNumber: output})
-              }>${
-                output
-              }</a>`,
-            });
-          }
-
-          if (header.id === 'attendance_audit' && typeof output !== 'undefined' && output !== '-') {
-            let link;
-            if (output && output.charAt(0) === 'P') {
-              link = app.namedRoutes.build('reports.pool-attendance-audit.report.print', {
-                filter: output,
-              })
-            } else if (output && output.charAt(0) === 'J') {
-              link = app.namedRoutes.build('reports.jury-attendance-audit.report.print', {
-                filter: output,
-              })
-            }
-            return ({
-              html: link 
-                ? `<a href='${link}' target="_blank">${
-                  output
-                }</a>`
-                : output,
-            });
           }
 
           if (header.id === 'juror_postcode' || header.id === 'document_code') {
@@ -566,6 +604,9 @@
       if (req.query.fromDate) {
         url = url + '?fromDate=' + req.query.fromDate + '&toDate=' + req.query.toDate;
       }
+      if (req.query.courtLocCode) {
+        url = url + (url.includes('?') ? '&' : '?') + 'courtLocCode=' + req.query.courtLocCode;
+      }
       if (req.query.sortBy) {
         url = url + (url.includes('?') ? '&' : '?') + 'sortBy=' + req.query.sortBy;
       }
@@ -582,6 +623,9 @@
       }
       if (reportType.backUrl) {
         return reportType.backUrl;
+      }
+      if (reportType.parentReport && (!reportType.parentReport.useParentRoute || reportType.parentReport.useParentRoute(req))) {
+        return app.namedRoutes.build(`reports.${reportType.parentReport.key}.report.get`, { filter: reportType.parentReport.filterParam });
       }
       if (reportType.search === 'trial') {
         if (reportKey === 'trial-attendance') {
@@ -612,14 +656,13 @@
         config.trialNumber = req.params.filter;
         config.locCode = req.session.authentication.locCode;
       } else if (reportType.search === 'courts') {
-        // VERIFY FIELD NAME ONCE AN API AVAILABLE
         config.courts = _.clone(req.session.reportCourts)
       } else if (reportType.search === 'jurorNumber') {
-        // VERIFY FIELD NAME ONCE AN API AVAILABLE 
         config.jurorNumber = req.params.filter;
       }
-    } else if (reportType.searchProperty) {
-      config[reportType.searchProperty] = req.params.filter;
+    } else if (reportType.searchProperty && reportType.searchProperty.filter) {
+      config[reportType.searchProperty.filter] = 
+        reportType.searchProperty.valueTransformer ? reportType.searchProperty.valueTransformer(req.params.filter) : req.params.filter;
     }
 
     if (req.query.fromDate) {
@@ -642,6 +685,12 @@
     }
     if(req.query.filterOwnedDeferrals) {
       config.filterOwnedDeferrals = req.query.filterOwnedDeferrals;
+    }
+
+    if (reportType.configSessionVariables) {
+      for (const [key, value] of Object.entries(reportType.configSessionVariables)) {
+        config[key] = req.session[value] || '';
+      }
     }
 
     // Backlink routing needs saved for jurors report
@@ -695,7 +744,10 @@
         });
       }
 
-      const pageHeadings = reportType.headings.map(heading => constructPageHeading(heading, headings));
+      let pageHeadings;
+      if (!_.isEmpty(reportType.headings)) {
+        pageHeadings = reportType.headings.map(heading => constructPageHeading(heading, headings));
+      }
 
       return res.render('reporting/standard-reports/standard-report', {
         title: reportType.title,

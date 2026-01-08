@@ -118,6 +118,11 @@
     standardReportRoutes(app, 'all-court-utilisation');
     standardReportRoutes(app, 'expense-payments');
     standardReportRoutes(app, 'outgoing-sms-messages');
+    standardReportRoutes(app, 'weekend-attendance');
+    standardReportRoutes(app, 'weekend-attendance-audit');
+    standardReportRoutes(app, 'expense-limit-adjustments');
+    standardReportRoutes(app, 'expense-limit-adjustments-audit');
+    standardReportRoutes(app, 'courts-incomplete-service');
   };
 
 })();
