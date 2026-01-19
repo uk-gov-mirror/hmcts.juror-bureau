@@ -94,6 +94,8 @@ module.exports.postFindJuror = (app) => async (req, res) => {
       name: jurorDetails[0].name,
       postcode: jurorDetails[0].address.postcode,
       court: jurorDetails[0].active_pool.court_name,
+      status: jurorDetails[0].active_pool.status,
     },
+    isFail: jurorDetails[0].active_pool.status !== 'Summoned'
   });
 };

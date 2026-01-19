@@ -75,15 +75,20 @@ function apiCall(jurorNumber) {
       const newRow = $(response);
       tableBody.append(newRow[0]);
 
-      const newInput = $(`<input id="${jurorNumber}" name="undeliverableJurors" value="${jurorNumber}" type="hidden"/>`);
-      jurorsToMarkUndeliverableForm.append(newInput[0]);
+      if (newRow.find('.mod-red-text').length === 0) {
+        const newInput = $(`<input id="${jurorNumber}" name="undeliverableJurors" value="${jurorNumber}" type="hidden"/>`);
+        jurorsToMarkUndeliverableForm.append(newInput[0]);
 
-      const _totalJurors = totalJurors();
+        const _totalJurors = totalJurors();
 
-      document.getElementById(`remove-${jurorNumber}`).addEventListener('click', () => removeFromTable(jurorNumber));
+        document.getElementById(`remove-${jurorNumber}`).addEventListener('click', () => removeFromTable(jurorNumber));
 
+        totalJurorsCaption.textContent = `${_totalJurors} ${_totalJurors === 1 ? 'juror' : 'jurors'} to be marked as undeliverable`;
+
+        const markAsUndeliverableButton = document.getElementById('markAsUndeliverableButton');
+        markAsUndeliverableButton.removeAttribute('disabled');
+      }
       tableWrapper.classList.remove('js-hidden');
-      totalJurorsCaption.textContent = `${_totalJurors} ${_totalJurors === 1 ? 'juror' : 'jurors'} to be marked as undeliverable`;
     })
     .catch((error) => {
       if (error.status === 404) {

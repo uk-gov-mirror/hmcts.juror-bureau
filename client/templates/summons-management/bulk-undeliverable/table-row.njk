@@ -3,6 +3,15 @@
     <a class="govuk-link" href="#">{{ rowData.jurorNumber }}</a>
   </td>
   <td scope="row" class="govuk-table__cell">
+    {% if rowData.status !== "Summoned" and rowData.status !== "-" %}
+      <span class="mod-red-text">
+    {% endif %}
+    {{ rowData.status or "-" }}
+    {% if rowData.status !== "Summoned" and rowData.status !== "-" %}
+      </span>
+    {% endif %}
+  </td>
+  <td scope="row" class="govuk-table__cell">
     {{ rowData.name.firstName or "-" }}
   </td>
   <td scope="row" class="govuk-table__cell">
