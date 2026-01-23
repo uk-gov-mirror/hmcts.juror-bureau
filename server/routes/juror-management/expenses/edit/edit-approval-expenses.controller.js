@@ -955,9 +955,35 @@
       };
 
       if (req.session.editedExpenses[date] && req.session.editedExpenses[date].formData) {
-        req.session.editedExpenses[date].formData['financial_loss']['loss_of_earnings'] = lossLimit;
-        req.session.editedExpenses[date].formData['financial_loss']['extra_care_cost'] = 0;
-        req.session.editedExpenses[date].formData['financial_loss']['other_cost'] = 0;
+        const fin = _.clone(req.session.editedExpenses[date].formData['financial_loss']);
+        let effectiveLossOfEarnings = Number(fin['loss_of_earnings']) || 0;
+        let effectiveExtraCareCost = Number(fin['extra_care_cost']) || 0;
+        let effectiveOtherCost = Number(fin['other_cost']) || 0;
+
+        const total = effectiveLossOfEarnings + effectiveExtraCareCost + effectiveOtherCost;
+
+        if (total > lossLimit) {
+          let difference = total - lossLimit;
+
+          if (effectiveOtherCost >= difference) {
+            effectiveOtherCost = effectiveOtherCost - difference;
+          } else {
+            difference = difference - effectiveOtherCost;
+            effectiveOtherCost = 0;
+
+            if (effectiveExtraCareCost >= difference) {
+              effectiveExtraCareCost = effectiveExtraCareCost - difference;
+            } else {
+              difference = difference - effectiveExtraCareCost;
+              effectiveExtraCareCost = 0;
+              effectiveLossOfEarnings = Math.max(0, effectiveLossOfEarnings - difference);
+            }
+          }
+
+          req.session.editedExpenses[date].formData['financial_loss']['loss_of_earnings'] = effectiveLossOfEarnings;
+          req.session.editedExpenses[date].formData['financial_loss']['extra_care_cost'] = effectiveExtraCareCost;
+          req.session.editedExpenses[date].formData['financial_loss']['other_cost'] = effectiveOtherCost;
+        }
       }
 
       req.session.financialLossWarning = showLossOverLimit;
