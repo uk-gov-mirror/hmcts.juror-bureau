@@ -393,7 +393,7 @@
             }
           }
 
-          if (header.id === 'COURT_LOCATION_NAME_AND_CODE' || header.id === 'court_name' || header.id === 'court_location_name_and_code_jp') {
+          if (['court_location_name_and_code', 'court_name', 'court_location_name_and_code_jp'].includes(header.id.toLowerCase())) {
             const courtLocCode = output.split('(')[1].split(')')[0];
             if (reportKey === 'weekend-attendance') {
               return ({
@@ -405,11 +405,19 @@
             if (reportKey === 'expense-limit-adjustments') {
               return ({
                 html: `<a href=${
-                  app.namedRoutes.build('reports.expense-limit-adjustments-audit.redirect.get', {
-                    locCode: courtLocCode,
-                    transportType: data.transportType ? _.camelCase(data.transportType) : '',
-                  })
-                }>${
+                  app.namedRoutes.build('reports.expense-limit-adjustments-audit.report.get', {
+                    filter: courtLocCode
+                  }) + `?transportType=${data.transportType ? _.camelCase(data.transportType) : ''}`
+                  + `&revisionNumber=${data.revisionNumber ? data.revisionNumber.toString() : ''}`
+                }>${output}</a>`,
+              });
+            }
+            if (reportKey === 'courts-incomplete-service') {
+              return ({
+                html: `<a href=${
+                    app.namedRoutes.build('reports.incomplete-service.report.get', { filter: dateFilter(new Date(), null, 'yyyy-MM-DD') })
+                    + `?courtLocCode=${courtLocCode}`
+                  }>${
                   output
                 }</a>`,
               });
@@ -661,8 +669,7 @@
         config.jurorNumber = req.params.filter;
       }
     } else if (reportType.searchProperty && reportType.searchProperty.filter) {
-      config[reportType.searchProperty.filter] = 
-        reportType.searchProperty.valueTransformer ? reportType.searchProperty.valueTransformer(req.params.filter) : req.params.filter;
+      config[reportType.searchProperty.filter] = req.params.filter;
     }
 
     if (req.query.fromDate) {
@@ -685,6 +692,11 @@
     }
     if(req.query.filterOwnedDeferrals) {
       config.filterOwnedDeferrals = req.query.filterOwnedDeferrals;
+    }
+    if(reportType.requestBodyConfig) {
+      for (const [key, value] of Object.entries(reportType.requestBodyConfig)) {
+        config[key] = value;
+      }
     }
 
     if (reportType.configSessionVariables) {
