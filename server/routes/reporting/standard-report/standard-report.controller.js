@@ -267,7 +267,7 @@
         return res.render('reporting/standard-reports/month-select', {
           months: generateReportSelectMonths(),
           reportName: reportType.title,
-          selectMonthLabel: reportType.selectMonthLabel,
+          selectMonthLabel: reportType.selectMonthLabel || 'Select a reporting month',
           processUrl: addURLQueryParams(reportType,  app.namedRoutes.build(`reports.${reportKey}.report.post`)),
           cancelUrl: app.namedRoutes.build('reports.reports.get'),
           tmpBody,
@@ -490,15 +490,31 @@
 
           const sortValue = numericTypes.includes(header.dataType) ? data[_.camelCase(header.id)] : output;
 
-          return ({
+          let dataFixedIndex;
+          if (reportType.bespokeReport && reportType.bespokeReport.fixRow) {
+            switch (reportType.bespokeReport.fixRow(data)) {
+              case 'top':
+                dataFixedIndex = 0;
+                break;
+              case 'bottom':
+                dataFixedIndex = tableData.length - 1;
+                break;
+            }
+          }
+
+          const cell = {
             html: output ? output : '-',
             attributes: {
               'data-sort-value': sortValue && sortValue !== '-' 
                 ? ((header.dataType === 'LocalDate' || header.dataType === 'Date') ? dateFilter(data[_.camelCase(header.id)], null, 'yyyy-MM-DD') : sortValue) 
-                : (numericTypes.includes(header.dataType) ? '0' : '-')
+                : (numericTypes.includes(header.dataType) ? '0' : '-'),
             },
             format: header.dataType === 'BigDecimal' ? 'numeric' : '',
-          });
+          }
+
+          if (dataFixedIndex) cell.attributes['data-fixed-index'] = dataFixedIndex;
+
+          return cell;
         });
 
         if (reportType.bespokeReport && reportType.bespokeReport.insertColumns) {
@@ -728,12 +744,16 @@
     }
 
     try {
-      const { headings, tableData } = await (reportType.bespokeReport?.dao
+      let { headings, tableData } = await (reportType.bespokeReport?.dao
         ? reportType.bespokeReport.dao(req, config)
         : standardReportDAO.post(req, config));
 
+      if (reportType.bespokeReport?.manipualteApiTableData) {
+        tableData = reportType.bespokeReport.manipualteApiTableData(tableData);
+      }
+
       if (isPrint) return standardReportPrint(app, req, res, reportKey, { headings, tableData });
-      if (isExport) return reportExport(app, req, res, reportKey, { headings, tableData }) ;
+      if (isExport) return reportExport(app, req, res, reportKey, { headings, tableData }, reportType.title) ;
       let tables = [];
 
       if (reportType.bespokeReport && reportType.bespokeReport.body) {
@@ -756,7 +776,13 @@
         });
       }
 
-      let pageHeadings;
+      let pageHeadings = [];
+      if (reportType.bespokeReport && reportType.bespokeReport.addPageHeadings) {
+        for (const [key, value] of Object.entries(reportType.bespokeReport.addPageHeadings())) {
+          reportType.headings.push(key);
+          headings[key] = value;
+        }
+      }
       if (!_.isEmpty(reportType.headings)) {
         pageHeadings = reportType.headings.map(heading => constructPageHeading(heading, headings));
       }
