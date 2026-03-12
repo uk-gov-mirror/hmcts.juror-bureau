@@ -137,6 +137,7 @@
       try {
         mnt = moment(date, inputFormat).tz("Europe/London");
       } catch (err) {
+        // Collect error for logging below, but do not expose details to the end user.
         errs.push(err);
       }
       if (mnt) {
@@ -147,12 +148,16 @@
             result = mnt.format(outputFormat);
           }
         } catch (err) {
+          // Collect error for logging below, but do not expose details to the end user.
           errs.push(err);
         }
       }
 
       if (errs.length) {
-        return errs.join('\n');
+        // Log detailed errors on the server for debugging, but return a generic value
+        // so that stack traces or internal error messages are not exposed to users.
+        console.error('dateFilter encountered error(s):', errs);
+        return '';
       }
       return result;
     },
@@ -255,12 +260,27 @@
     makeDate: function(date) {
       const dateRegex = /\d{4}-\d{2}-\d{2}/g;
 
-      // eslint is flagging this but sonar will also flagging if I dont do this........
-      if ((!date?.length || !(date instanceof Array)) && !dateRegex.test(date)) {
-        return new Date();
+      // If already a Date, return it
+      if (date instanceof Date) return date;
+
+      // Handle arrays like [YYYY, M, D, hh?, mm?, ss?, ns?]
+      if (Array.isArray(date) && date.length >= 3) {
+        let [y, m, d, hh = 0, mm = 0, ss = 0, ns = 0] = date;
+        const ms = Math.floor((ns || 0) / 1e6);
+        return new Date(y, (m || 1) - 1, d, hh, mm, ss, ms);
       }
 
-      return new Date(date);
+      // If string like YYYY-MM-DD or other ISO, let Date parse it
+      if (typeof date === 'string' && dateRegex.test(date)) {
+        return new Date(date);
+      }
+
+      // Fallback: try constructing a Date, otherwise return now
+      try {
+        return new Date(date);
+      } catch (ex) {
+        return new Date();
+      }
     },
 
     console: function(obj) {
