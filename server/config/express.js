@@ -17,6 +17,7 @@ const modUtils = require('../lib/mod-utils');
 const isCourtUser = require('../components/auth/user-type').isCourtUser;
 const rateLimit = require('express-rate-limit');
 const { resolveBackLink } = require('../lib/back-link');
+const validateContentType = require('../components/middleware/content-type').validateContentType;
 
 // Grab environment variables to enable/disable certain services
 const pkg = require(__dirname + '/../../package.json');
@@ -106,6 +107,7 @@ module.exports = async (app) => {
   // Serve all static files
   app.use(express.static(app.get('appPath')));
 
+  app.use(validateContentType);
   app.use(compression());
   app.use(bodyParser.urlencoded({ extended: true }));
   app.use(bodyParser.json());
