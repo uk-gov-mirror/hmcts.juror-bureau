@@ -90,4 +90,23 @@
     }
   });
 
+  module.exports.markEmailDeliveredDAO = new DAO('moj/er-administration/mark-delivered', {
+    put: function(body) {
+      return {
+        uri: this.resource,
+        body: replaceAllObjKeys(body, _.snakeCase),
+        transform: (data) => replaceAllObjKeys(basicDataTransform(data), _.camelCase),
+      }
+    }
+  });
+  
+  module.exports.changeEmailRequestStatus = new DAO('moj/er-administration/email-sent', {
+    put: function(body) {
+      return {
+        uri: this.resource,
+        body: replaceAllObjKeys(body, _.snakeCase),
+      }
+    }
+  });
+
 })();

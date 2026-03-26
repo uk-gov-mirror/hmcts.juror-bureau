@@ -56,7 +56,6 @@
     let response;
     try {
       response = await sendReminderDAO.post(req, { laCodes });
-      console.log('\n\nSend reminder response:', response, '\n\n');
     } catch (err) {
       app.logger.crit('Failed to send reminder email to local authority', {
         auth: req.session.authentication,
@@ -105,6 +104,10 @@
         });
       }
       req.session.errors = failedLaErrors;
+      if (response.totalLaCodesRequested - response.failedNotifications.length > 0) {
+        req.session.bannerMessage = `Reminders sent to ${response.totalLaCodesRequested - response.failedNotifications.length} 
+          local ${response.totalLaCodesRequested - response.failedNotifications.length > 1 ? 'authorities' : 'authority'}.`;
+      }
     }
 
     if (indivdualLaFlow) {
@@ -115,8 +118,8 @@
     }
 
     if (!response.failedNotifications?.length) {
-      req.session.bannerMessage = `Reminders sent to ${response.successfulNotificationsSent} 
-        local ${response.successfulNotificationsSent > 1 ? 'authorities' : 'authority'}.`;
+      req.session.bannerMessage = `Reminders sent to ${response.totalLaCodesRequested} 
+        local ${response.totalLaCodesRequested > 1 ? 'authorities' : 'authority'}.`;
     }
     return res.redirect(app.namedRoutes.build('electoral-register.get'));
   };

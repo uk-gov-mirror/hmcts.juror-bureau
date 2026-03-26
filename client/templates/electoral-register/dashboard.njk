@@ -20,7 +20,7 @@
   {% if bannerMessage %}
     {{ mojAlert({
       variant: "success",
-      text: bannerMessage,
+      html: bannerMessage,
       iconFallbackText: "Success",
       dismissible: true,
       classes: "govuk-!-margin-top-6"
@@ -208,6 +208,15 @@
               attributes: {
                 id: "sendReminderButton",
                 formAction: postRoutes.sendReminder
+              }
+            }) }}
+            {{ govukButton({
+              text: "Mark data request email as delivered",
+              classes: "govuk-button--secondary",
+              type: "submit",
+              attributes: {
+                id: "markEmailDeliveredButton",
+                formAction: postRoutes.markEmailDelivered
               }
             }) }}
           </div>
