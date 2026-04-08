@@ -358,34 +358,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hods/loading-spinner@npm:^0.5.2":
-  version: 0.5.2
-  resolution: "@hods/loading-spinner@npm:0.5.2"
-  dependencies:
-    "@hods/sass-base": "npm:^0.5.2"
-    "@not-govuk/component-helpers": "npm:^0.15.8"
-  peerDependencies:
-    "@not-govuk/docs-components": ^0.15.8
-    "@storybook/addon-docs": ^6.5.16
-    react: ^18.0.0
-  peerDependenciesMeta:
-    "@not-govuk/docs-components":
-      optional: true
-    "@storybook/addon-docs":
-      optional: true
-  checksum: 10/2a76b2d2982356fe82798792b77979b43492b532d517a69874c8d11622fe6072c3e775948dbd5bf080769de3bf83368317cbb57524e2c69dcd5135d78d63d3b1
-  languageName: node
-  linkType: hard
-
-"@hods/sass-base@npm:^0.5.2":
-  version: 0.5.2
-  resolution: "@hods/sass-base@npm:0.5.2"
-  dependencies:
-    "@not-govuk/sass-base": "npm:^0.15.8"
-  checksum: 10/b1bc6f9568816288f36a9f6d8b467136ad89d82b943f8924e7370e2265656d2fd26c480474c699815331e6a656a0917db4b47f60fa9766b9d4a727f369beb0ea
-  languageName: node
-  linkType: hard
-
 "@humanfs/core@npm:^0.19.1":
   version: 0.19.1
   resolution: "@humanfs/core@npm:0.19.1"
@@ -526,22 +498,6 @@ __metadata:
   version: 1.8.0
   resolution: "@noble/hashes@npm:1.8.0"
   checksum: 10/474b7f56bc6fb2d5b3a42132561e221b0ea4f91e590f4655312ca13667840896b34195e2b53b7f097ec080a1fdd3b58d902c2a8d0fbdf51d2e238b53808a177e
-  languageName: node
-  linkType: hard
-
-"@not-govuk/component-helpers@npm:^0.15.8":
-  version: 0.15.14
-  resolution: "@not-govuk/component-helpers@npm:0.15.14"
-  checksum: 10/b0e87de42714a9563939664571ad6b0507965306ca5797709d18826c39b538d3b815ae900d9c3003789b3c02eb9aaab641c332053d6b78334914b9b2ff050565
-  languageName: node
-  linkType: hard
-
-"@not-govuk/sass-base@npm:^0.15.8":
-  version: 0.15.14
-  resolution: "@not-govuk/sass-base@npm:0.15.14"
-  dependencies:
-    govuk-frontend: "npm:5.9.0"
-  checksum: 10/dae43c3af82d9983c0bd73a589a53e977eae9ffe7e0cf6b3c8ce4079ebbe8cb0d24eb670e66bb66bb94a837cb33cf1c8b25df87a4b3acca07b39712f636332eb
   languageName: node
   linkType: hard
 
@@ -3113,13 +3069,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"govuk-frontend@npm:5.9.0":
-  version: 5.9.0
-  resolution: "govuk-frontend@npm:5.9.0"
-  checksum: 10/bc75221e774d7cbedf3a2575cb49238be19b904c7bd2d6f5fa4efa3f3433d99b8366ae677d797f06c496306ab7efa2c14ec509e9e83edc39128f5fc6cc1e1b99
-  languageName: node
-  linkType: hard
-
 "govuk-frontend@npm:^5.14.0":
   version: 5.14.0
   resolution: "govuk-frontend@npm:5.14.0"
@@ -3704,7 +3653,6 @@ __metadata:
   dependencies:
     "@azure/identity": "npm:^4.13.1"
     "@hmcts/properties-volume": "npm:^1.3.2"
-    "@hods/loading-spinner": "npm:^0.5.2"
     "@launchdarkly/node-server-sdk": "npm:8.2.6"
     "@ministryofjustice/frontend": "npm:8.0.1"
     "@scottish-government/pattern-library": "npm:0.0.381"
