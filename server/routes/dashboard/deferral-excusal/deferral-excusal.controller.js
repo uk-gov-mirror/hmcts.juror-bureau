@@ -49,6 +49,7 @@
         }
 
         , reasonsSuccessCB = function(response){
+          response = response.data;
 
           var index;
 
@@ -124,9 +125,8 @@
         jwtToken = jwt.sign(apiUserObj, secretsConfig.get('secrets.juror.bureau-jwtKey'), { expiresIn: secretsConfig.get('secrets.juror.bureau-jwtTTL') });
 
         console.log('Calling deferral-excusal API - excuse codes');
-
         excusalObj
-          .get(req)
+          .get(jwtToken)
           .then(reasonsSuccessCB)
           .catch(reasonsErrorCB);
 
