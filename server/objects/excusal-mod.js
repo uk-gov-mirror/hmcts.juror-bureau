@@ -1,10 +1,11 @@
 (function() {
   'use strict';
 
+  const _ = require('lodash');
   const { DAO } = require('./dataAccessObject');
   const urljoin = require('url-join');
-  const { basicDataTransform } = require('../lib/utils');
-  const { toReplyMethod } = require('../lib/mod-utils');
+  const { basicDataTransform2 } = require('../lib/utils');
+  const { toReplyMethod, replaceAllObjKeys } = require('../lib/mod-utils');
 
   module.exports.excusalObject = new DAO('moj/excusal-response/juror', {
     put: function(body, jurorNumber, replyMethod) {
@@ -20,7 +21,7 @@
       return {
         uri: urljoin(this.resource, jurorNumber),
         body: tmpBody,
-        transform: basicDataTransform,
+        transform: basicDataTransform2,
       }
     }
   });
