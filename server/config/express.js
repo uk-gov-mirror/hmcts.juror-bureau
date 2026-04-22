@@ -18,6 +18,7 @@ const isCourtUser = require('../components/auth/user-type').isCourtUser;
 const rateLimit = require('express-rate-limit');
 const { resolveBackLink } = require('../lib/back-link');
 const validateContentType = require('../components/middleware/content-type').validateContentType;
+const detectHtmlContent = require('../components/middleware/content-html').detectHtmlContent;
 
 // Grab environment variables to enable/disable certain services
 const pkg = require(__dirname + '/../../package.json');
@@ -108,10 +109,13 @@ module.exports = async (app) => {
   app.use(express.static(app.get('appPath')));
 
   app.use(validateContentType);
+  
   app.use(compression());
   app.use(bodyParser.urlencoded({ extended: true }));
   app.use(bodyParser.json());
   app.use(methodOverride());
+
+  app.use(detectHtmlContent);
 
   app.set('trust proxy', 1);
   new SessionConfig().start(app);
