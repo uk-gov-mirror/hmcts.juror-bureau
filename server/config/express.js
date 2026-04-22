@@ -109,7 +109,7 @@ module.exports = async (app) => {
   app.use(express.static(app.get('appPath')));
 
   app.use(validateContentType);
-  
+
   app.use(compression());
   app.use(bodyParser.urlencoded({ extended: true }));
   app.use(bodyParser.json());
