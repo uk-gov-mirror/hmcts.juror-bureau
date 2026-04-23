@@ -1,9 +1,12 @@
+
 (function() {
   'use strict';
 
   const { DAO } = require('./dataAccessObject');
-  const { basicDataTransform } = require('../lib/utils');
+  const { basicDataTransform, basicDataTransform2 } = require('../lib/utils');
   const urljoin = require('url-join');
+  const { replaceAllObjKeys } = require('../lib/mod-utils');
+  const _ = require('lodash');
 
   module.exports.requestInfoObject = new DAO('moj/letter/request-information', {
     post: function(jurorNumber, data, replyMethod) {
@@ -23,7 +26,7 @@
     put: function(jurorNumber, key) {
       return {
         uri: urljoin(this.resource, jurorNumber, key),
-        transform: basicDataTransform,
+        transform: basicDataTransform2,
       };
     },
   });
@@ -52,7 +55,7 @@
           return {
             uri: uri,
             body,
-            transform: basicDataTransform,
+            transform: basicDataTransform2,
           };
         },
       });

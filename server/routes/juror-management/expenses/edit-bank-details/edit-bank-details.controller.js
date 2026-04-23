@@ -59,7 +59,7 @@
         auth: req.session.authentication,
       });
 
-      const juror = _.mapKeys(data, (__, key) => _.camelCase(key));
+      const juror = data;
 
       req.session.bankDetails = {};
       req.session.bankDetails.etag = headers.etag;
@@ -164,9 +164,7 @@
           accountHolderName: req.body.accountHolderName,
         };
 
-        const payload = _.mapKeys(body, (__, key) => _.snakeCase(key));
-
-        await jurorBankDetailsDAO.patch(req, payload);
+        await jurorBankDetailsDAO.patch(req, body);
 
         app.logger.info('Updated juror\'s bank details:  ', {
           auth: req.session.authentication,

@@ -830,7 +830,7 @@
     };
 
     responseClone.isLateSummons = responseClone.processingStatus != "Closed" && modUtils.isLateSummons(responseClone.serviceStartDate);
-    responseClone.completedAt = responseClone.completed_at;
+    responseClone.completedAt = responseClone.completedAt;
 
     req.session.replyDetails = {};
     req.session.replyDetails.jurorNumber = response[0].data.jurorNumber;
@@ -841,7 +841,7 @@
     // we need to store the location code because we need it to be able to visit the juror record page
     req.session.locCode = modUtils.getCurrentActiveCourt(req, {
       poolNumber: responseClone.poolNumber,
-      currentOwner: responseClone.current_owner,
+      currentOwner: responseClone.currentOwner,
     });
 
     responseClone.statusRender = response[0].data.jurorStatus;
@@ -998,16 +998,18 @@
   }
 
   module.exports.getCheckCanAccommodate = (app) => (req, res) => {
+    const { id, type } = req.params;
     const tmpErrors = _.clone(req.session.errors)
 
     delete req.session.errors;
     delete req.session.formFields;
 
     return res.render('summons-management/_common/check-can-accommodate', {
-      jurorNumber: req.params['id'],
+      jurorNumber: id,
+      type,
       jurorDetails: req.session.jurorDetails,
       cancelUrl: modUtils
-        .opticReferenceRedirectUrl(req.params['id'], app.namedRoutes, req.session.jurorDetails.replyType),
+        .opticReferenceRedirectUrl(id, app.namedRoutes, type),
       errors: {
         title: 'Please check the form',
         count: typeof tmpErrors !== 'undefined' ? Object.keys(tmpErrors).length : 0,
@@ -1017,14 +1019,14 @@
   };
 
   module.exports.postCheckCanAccommodate = (app) => async (req, res) => {
-    const { id } = req.params;
+    const { id, type } = req.params;
 
     const validatorResult = validate(req.body, opticReferenceValidator.opticReferenceAdd());
 
     if (typeof validatorResult !== 'undefined') {
       req.session.errors = validatorResult;
 
-      return res.redirect(app.namedRoutes.build('response.check-can-accommodate.get', { id }));
+      return res.redirect(app.namedRoutes.build('response.check-can-accommodate.get', { id, type }));
     }
 
     try {
@@ -1041,7 +1043,7 @@
       });
 
       return res.redirect(modUtils
-        .opticReferenceRedirectUrl(req.params['id'], app.namedRoutes, req.session.jurorDetails.replyType));
+        .opticReferenceRedirectUrl(id, app.namedRoutes, type));
     } catch (err) {
       app.logger.crit('Something went wrong when adding the optic reference: ', {
         auth: req.session.authentication,

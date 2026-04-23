@@ -151,7 +151,7 @@
             currentTab: 'overview',
             jurorStatus,
             canRunPoliceCheck,
-            policeCheck: resolvePoliceCheckStatus(req, overview.data.commonDetails.police_check),
+            policeCheck: resolvePoliceCheckStatus(req, overview.data.commonDetails.policeCheck),
             bannerMessage: bannerMessage,
             availableMessage: availableMessage,
             poolDetails,
@@ -1294,7 +1294,7 @@
       return false;
     }
 
-    return !commonDetails.response_entered;
+    return !commonDetails.responseEntered;
   }
 
   const hasJurorNotes = (app) => async(req, res) => {
